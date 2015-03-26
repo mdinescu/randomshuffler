@@ -37,29 +37,29 @@ namespace DNQ.RandomSuffler
             memMap = MemoryMappedFile.CreateFromFile(file, System.IO.FileMode.Open, "ListMap", fileInfo.Length, MemoryMappedFileAccess.ReadWrite);
             memView = memMap.CreateViewAccessor();
             _offset = 0;
-        }
-
-        public void Close()
-        {
-            Dispose();
-        }
-
+        } 
+        
+        /// <summary>
+        /// Hardcoded to always return 0. This value does not matter for our implementation.
+        /// </summary>
         public int Depth
         {
             get { return 0; }
         }
 
+        /// <summary>
+        /// Returns meta-data about the data provided by this reader.
+        /// </summary>
+        /// <returns>A DataTable object that represents the schema for the data provided by this reader.</returns>
         public DataTable GetSchemaTable()
         {
             throw new NotImplementedException();
         }
 
-        public bool IsClosed
-        {
-            get;
-            private set;
-        }
-
+        /// <summary>
+        /// Always return false because this implementation only supports a single-resultset.
+        /// </summary>
+        /// <returns></returns>
         public bool NextResult()
         {
             return false;
@@ -82,33 +82,12 @@ namespace DNQ.RandomSuffler
             return (_offset < fileInfo.Length);
         }
 
+        /// <summary>
+        /// Hard-coded to always return 1. For our purposes the actual value does not matter much.
+        /// </summary>
         public int RecordsAffected
         {
             get { return 1; }
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                if (memView != null)
-                {
-                    memView.Dispose();
-                    memView = null;
-                }
-                if (memMap != null)
-                {
-                    memMap.Dispose();
-                    memMap = null;
-                }
-            }
-            IsClosed = true;
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
         }
 
         /// <summary>
@@ -119,6 +98,12 @@ namespace DNQ.RandomSuffler
             get { return 4; }
         }
 
+        /// <summary>
+        /// Returns the value, as a boolean, for a given field. In this implementation
+        /// the only field that can be read as a boolean is field 2, the code type.
+        /// </summary>
+        /// <param name="i">The field index.</param>
+        /// <returns>A boolean value.</returns>
         public bool GetBoolean(int i)
         {
             if (i == 2)
@@ -126,6 +111,12 @@ namespace DNQ.RandomSuffler
             throw new InvalidCastException("Invalid data type for column " + i.ToString());
         }
 
+        /// <summary>
+        /// Returns the value, as a byte, for a given field. In this implementation
+        /// the only field that can be read as a byte is field 2, the code type.
+        /// </summary>
+        /// <param name="i">The field index.</param>
+        /// <returns>A byte value (0 means the Code is less then 2^31 and 1 means it greater than)</returns>
         public byte GetByte(int i)
         {
             if (i == 2)
@@ -133,26 +124,11 @@ namespace DNQ.RandomSuffler
             throw new InvalidCastException("Invalid data type for column " + i.ToString());
         }
 
-        public long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length)
-        {
-            throw new InvalidCastException("Invalid data type for column " + i.ToString());
-        }
-
-        public char GetChar(int i)
-        {
-            throw new InvalidCastException("Invalid data type for column " + i.ToString());
-        }
-
-        public long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
-        {
-            throw new InvalidCastException("Invalid data type for column " + i.ToString());
-        }
-
-        public IDataReader GetData(int i)
-        {
-            throw new InvalidCastException("Invalid data type for column " + i.ToString());
-        }
-
+        /// <summary>
+        /// Returns the name of teh data type of a given field.
+        /// </summary>
+        /// <param name="i">The index of the field.</param>
+        /// <returns></returns>
         public string GetDataTypeName(int i)
         {
             switch (i)
@@ -170,21 +146,11 @@ namespace DNQ.RandomSuffler
             }
         }
 
-        public DateTime GetDateTime(int i)
-        {
-            throw new InvalidCastException("Invalid data type for column " + i.ToString());
-        }
-
-        public decimal GetDecimal(int i)
-        {
-            throw new InvalidCastException("Invalid data type for column " + i.ToString());
-        }
-
-        public double GetDouble(int i)
-        {
-            throw new InvalidCastException("Invalid data type for column " + i.ToString());
-        }
-
+        /// <summary>
+        /// Returns the the data type of a given field.
+        /// </summary>
+        /// <param name="i">The index of the field.</param>
+        /// <returns></returns>
         public Type GetFieldType(int i)
         {
             switch (i)
@@ -200,21 +166,6 @@ namespace DNQ.RandomSuffler
                 default:
                     throw new IndexOutOfRangeException();
             }
-        }
-
-        public float GetFloat(int i)
-        {
-            throw new InvalidCastException("Invalid data type for column " + i.ToString());
-        }
-
-        public Guid GetGuid(int i)
-        {
-            throw new InvalidCastException("Invalid data type for column " + i.ToString());
-        }
-
-        public short GetInt16(int i)
-        {
-            throw new InvalidCastException("Invalid data type for column " + i.ToString());
         }
 
         /// <summary>
@@ -243,6 +194,11 @@ namespace DNQ.RandomSuffler
             throw new InvalidCastException("Invalid data type for column " + i.ToString());
         }
 
+        /// <summary>
+        /// Returns the name of a given field.
+        /// </summary>
+        /// <param name="i">The index of the field to get the name of</param>
+        /// <returns>A string, name of the field.</returns>
         public string GetName(int i)
         {
             switch (i)
@@ -260,6 +216,11 @@ namespace DNQ.RandomSuffler
             }
         }
 
+        /// <summary>
+        /// Returns the index for a given field.
+        /// </summary>
+        /// <param name="name">The name of the field to get the index for.</param>
+        /// <returns>The index (order) or the field.</returns>
         public int GetOrdinal(string name)
         {
             switch (name)
@@ -277,11 +238,11 @@ namespace DNQ.RandomSuffler
             }
         }
 
-        public string GetString(int i)
-        {
-            throw new InvalidCastException("Invalid data type for column " + i.ToString());
-        }
-
+        /// <summary>
+        /// Returns the value for a given field, for the current record.
+        /// </summary>
+        /// <param name="i">The index of the field to get the value for.</param>
+        /// <returns>The value of the field, for the current record.</returns>
         public object GetValue(int i)
         {
             switch (i)
@@ -299,17 +260,22 @@ namespace DNQ.RandomSuffler
             }
         }
 
-        public int GetValues(object[] values)
-        {
-            throw new NotImplementedException();
-        }
-
+        /// <summary>
+        /// Tests whether a field is null (does not have a value) for the current record.
+        /// </summary>
+        /// <param name="i">The index of the field to test.</param>
+        /// <returns>True if the field is null (does not have a value), false otherwise.</returns>
         public bool IsDBNull(int i)
         {
             if (i == 3) return true;
             return false;
         }
 
+        /// <summary>
+        /// Convenience indexed accessor (for retrieving field values by field name)
+        /// </summary>
+        /// <param name="name">Name of the filed to retreive</param>
+        /// <returns>The value that corresponds to the given field.</returns>
         public object this[string name]
         {
             get
@@ -330,6 +296,11 @@ namespace DNQ.RandomSuffler
             }
         }
 
+        /// <summary>
+        /// Convenience indexed accessor (for retrieving field values by field index)
+        /// </summary>
+        /// <param name="name">Index of the filed to retreive</param>
+        /// <returns>The value that corresponds to the given field.</returns>
         public object this[int i]
         {
             get
@@ -349,6 +320,119 @@ namespace DNQ.RandomSuffler
                 }
             }
         }
+
+        #region Closing and Disposing related methods
+
+        /// <summary>
+        /// Read-only boolean property, returns True if the data reader is closed (disposed).
+        /// </summary>
+        public bool IsClosed
+        {
+            get;
+            private set;
+        }
+
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (memView != null)
+                {
+                    memView.Dispose();
+                    memView = null;
+                }
+                if (memMap != null)
+                {
+                    memMap.Dispose();
+                    memMap = null;
+                }
+            }
+            IsClosed = true;
+        }
+
+        /// <summary>
+        /// Disposes this instance
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Closes this instance of list mapper (ivokes Dispose)
+        /// </summary>
+        public void Close()
+        {
+            Dispose();
+        }
+
+        #endregion
+
+        #region Extra IDataReader methods that are not used/implemented
+
+        public float GetFloat(int i)
+        {
+            throw new InvalidCastException("Invalid data type for column " + i.ToString());
+        }
+
+        public Guid GetGuid(int i)
+        {
+            throw new InvalidCastException("Invalid data type for column " + i.ToString());
+        }
+
+        public short GetInt16(int i)
+        {
+            throw new InvalidCastException("Invalid data type for column " + i.ToString());
+        }
+
+        public int GetValues(object[] values)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string GetString(int i)
+        {
+            throw new InvalidCastException("Invalid data type for column " + i.ToString());
+        }
+
+        public DateTime GetDateTime(int i)
+        {
+            throw new InvalidCastException("Invalid data type for column " + i.ToString());
+        }
+
+        public decimal GetDecimal(int i)
+        {
+            throw new InvalidCastException("Invalid data type for column " + i.ToString());
+        }
+
+        public double GetDouble(int i)
+        {
+            throw new InvalidCastException("Invalid data type for column " + i.ToString());
+        }
+
+        public long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length)
+        {
+            throw new InvalidCastException("Invalid data type for column " + i.ToString());
+        }
+
+        public char GetChar(int i)
+        {
+            throw new InvalidCastException("Invalid data type for column " + i.ToString());
+        }
+
+        public long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
+        {
+            throw new InvalidCastException("Invalid data type for column " + i.ToString());
+        }
+
+        public IDataReader GetData(int i)
+        {
+            throw new InvalidCastException("Invalid data type for column " + i.ToString());
+        }
+
+        #endregion
     }
 
 }
