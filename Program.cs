@@ -51,21 +51,25 @@ namespace DNQ.RandomSuffler
         static string inputFile = "numbers.lst";
         static System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 
+        /// <summary>
+        /// Prompts user to enter the number of elements in the list, then proceeds to generate a randomized
+        /// list of that many numbers. The list of numbers generated will be saved in a file (by default
+        /// called numbers.lst) in binary form. The endianness of the list will be the same as the endianness
+        /// of the microprocessor where the code is executed.
+        /// </summary>
         static void GenerateList()
         {
-            Console.Clear();
+            DisplayHeader();
 
-            Console.WriteLine("Random List Generator\r\n==============================================================================");
-            Console.WriteLine("    M. Dinescu <mdinescu@donaq.com>");
-            Console.WriteLine();
             Console.WriteLine("[List Generator]");
             Console.WriteLine();
             do
             {
-                Console.SetCursorPosition(0, 6);
-                Console.WriteLine("                                                                                                   ");
+                ClearPosition(6);
+                
                 Console.SetCursorPosition(0, 5);
                 Console.WriteLine("Enter # of values to generate 1 - [4294967296]: ");
+                
                 string val = Console.ReadLine();
                 if (val == "")
                     maxNum = UInt32.MaxValue;
@@ -75,17 +79,16 @@ namespace DNQ.RandomSuffler
 
             if (maxNum > 100000000)
             {
-                Console.SetCursorPosition(0, 6);
-                Console.WriteLine("                                                                                                      ");
+                ClearPosition(6);
+                
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Warning! The list will require approx. {0:0.000}GB of disk space..    \r\n[Press Any Key To Continue or ESC to cancel]", ((double)maxNum / 250000000));
                 Console.ForegroundColor = ConsoleColor.Gray;
                 if (Console.ReadKey().Key == ConsoleKey.Escape)
                     return;
             }
-            
-            Console.SetCursorPosition(0, 6);
-            Console.WriteLine("                                                                                                      ");
+
+            ClearPosition(6);
             Console.WriteLine("Shuffling a list of {0} integers                                                         ", maxNum);
 
             sw.Start();
@@ -138,207 +141,172 @@ namespace DNQ.RandomSuffler
             Console.ReadKey();
         }
 
+        /// <summary>
+        /// Displays the sub-menu for configuring a database connection and uploading a pre-generated list of
+        /// numbers to a SQL database.
+        /// </summary>
         static void UploadToServer()
         {
             do
             {
-                Console.Clear();
-
-                Console.WriteLine("Random List Generator\r\n==============================================================================");
-                Console.WriteLine("    M. Dinescu <mdinescu@donaq.com>");
-                Console.WriteLine();
+                DisplayHeader();
+                    
                 Console.WriteLine("[Upload to Server]");
                 Console.WriteLine();
-  
-                do
-                {
-                    Console.Clear();
 
-                    Console.WriteLine("Random List Generator\r\n==============================================================================");
-                    Console.WriteLine("    M. Dinescu <mdinescu@donaq.com>");
-                    Console.WriteLine();
-                    Console.WriteLine("[Upload to Server]");
-                    Console.WriteLine();
+                Console.WriteLine("Please select:");
+                Console.WriteLine("1. Create table");
+                Console.WriteLine("2. Drop table");
+                Console.WriteLine("3. Upload numbers");
+                Console.WriteLine("4. Change configuration");
+                Console.WriteLine("0. Return to main menu");
 
-                    Console.WriteLine("Please select:");
-                    Console.WriteLine("1. Create table");
-                    Console.WriteLine("2. Drop table");
-                    Console.WriteLine("3. Upload numbers");
-                    Console.WriteLine("4. Change configuration");
-                    Console.WriteLine("0. Return to main menu");
-
-                    var key = Console.ReadKey();
-                    if (key.Key == ConsoleKey.Escape || key.Key == ConsoleKey.D0) return;
-                    if (key.Key == ConsoleKey.D1) CreateTable();
-                    if (key.Key == ConsoleKey.D2) DropTable();
-                    if (key.Key == ConsoleKey.D3) UploadNumbers();
-                    if (key.Key == ConsoleKey.D4) ConfigUpload();
-                } while (true);
+                var key = Console.ReadKey();
+                if (key.Key == ConsoleKey.Escape || key.Key == ConsoleKey.D0) return;
+                if (key.Key == ConsoleKey.D1) CreateTable();
+                if (key.Key == ConsoleKey.D2) DropTable();
+                if (key.Key == ConsoleKey.D3) UploadNumbers();
+                if (key.Key == ConsoleKey.D4) ConfigUpload();
             } while (true);
-
-            Console.Write("\r\n[Press Any Key]                                                                                        ");
-            Console.ReadKey();
         }
 
+        /// <summary>
+        /// Helper method that clears the screen and displays a header. The header is always the same.
+        /// </summary>
+        static void DisplayHeader()
+        {
+            Console.Clear();
+
+            Console.WriteLine("Random List Generator\r\n==============================================================================");
+            Console.WriteLine("    M. Dinescu <mdinescu@donaq.com>");
+            Console.WriteLine();
+        }
+
+        /// <summary>
+        /// Helper method that clears a line of text, given the line's vertical position.
+        /// </summary>
+        /// <param name="position">Vertical position of the line to clear.</param>
+        static void ClearPosition(int position)
+        {
+            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.SetCursorPosition(0, position);
+            Console.Write("                                                                                                    "
+        }
+
+        /// <summary>
+        /// Helper method that can be used to read & validate user input, with an optional header message.
+        /// </summary>
+        /// <param name="position">Vertical position of the line where the input will be requested</param>
+        /// <param name="input">The name of the input being requested (ie. username)</param>
+        /// <param name="output">A reference to a string variable that will hold the user input.</param>
+        /// <param name="displayPrompt">Optional, a delegate that would render some text in preparation for the input.</param>
+        /// <param name="validator">Optional, a validator function that can check the user input for validity.</param>
+        static void ReadString(int position, string input, ref string output, Action displayPrompt, Func<string, bool> validator)
+        {
+            do
+            {
+                if (displayPrompt != null)
+                    displayPrompt();
+
+                ClearPosition(position + 1);
+                Console.SetCursorPosition(0, position);
+                Console.WriteLine("Enter {0} [{1}]:                    ", input, output);
+
+                var val = Console.ReadLine();
+                if (val != "") output = val;
+
+                if (validator != null && !validator(val)) 
+                    output = "";
+            } while (string.IsNullOrWhiteSpace(output));
+        }
+
+        /// <summary>
+        /// Helper method that can be used to read & validate user input, with an optional header message. The difference
+        /// between this method and <see cref="ReadString"/> is that this method does not display the previous user input.
+        /// It should be used for password inputs.
+        /// </summary>
+        /// <param name="position">Vertical position of the line where the input will be requested</param>
+        /// <param name="input">The name of the input being requested (ie. username)</param>
+        /// <param name="output">A reference to a string variable that will hold the user input.</param>
+        /// <param name="displayPrompt">Optional, a delegate that would render some text in preparation for the input.</param>
+        /// <param name="validator">Optional, a validator function that can check the user input for validity.</param>
+        static void ReadMaskedString(int position, string input, ref string output, Action displayPrompt, Func<string, bool> validator)
+        {
+            do
+            {
+                if (displayPrompt != null)
+                    displayPrompt();
+
+                ClearPosition(position + 1); 
+                Console.SetCursorPosition(0, position);
+                Console.WriteLine("Enter {0} [***********]:                    ", input);
+
+                var val = Console.ReadLine();
+                if (val != "") output = val;
+                if (validator != null && !validator(val))
+                    output = "";
+            } while (string.IsNullOrWhiteSpace(output));
+        }
+
+        /// <summary>
+        /// Helper method that displays the current configuration for uploads.
+        /// </summary>
+        /// <param name="position">Vertical line where the settings should be displayed on the screen.</param>
+        static void DisplayCurrentSettings(int position)
+        {
+            Console.SetCursorPosition(0, position);
+
+            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.WriteLine("\r\nCurrent Settings:                                                                              ");
+            Console.Write(" Server:     "); Console.ForegroundColor = ConsoleColor.White; Console.Write(serverName + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
+            Console.Write(" Database:   "); Console.ForegroundColor = ConsoleColor.White; Console.Write(databaseName + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
+            Console.Write(" Username:   "); Console.ForegroundColor = ConsoleColor.White; Console.Write(username + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
+            Console.Write(" Password:   "); Console.ForegroundColor = ConsoleColor.White; Console.Write("***********\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
+            Console.Write(" Table:      "); Console.ForegroundColor = ConsoleColor.White; Console.Write(tableName + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
+            Console.Write(" Input File: "); Console.ForegroundColor = ConsoleColor.White; Console.Write(inputFile + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
+        }
+
+        /// <summary>
+        /// Interactively requests configuration input for uploading to a database.
+        /// </summary>
         static void ConfigUpload()
         {
             do
             {
-                Console.Clear();
+                DisplayHeader();
 
-                Console.WriteLine("Random List Generator\r\n==============================================================================");
-                Console.WriteLine("    M. Dinescu <mdinescu@donaq.com>");
-                Console.WriteLine();
                 Console.WriteLine("[Upload to Server]");
                 Console.WriteLine("");
 
+                ReadString(14, "server name", ref serverName, delegate { DisplayCurrentSettings(5); }, null);
 
-                do
+                ReadString(14, "database name", ref databaseName, delegate { DisplayCurrentSettings(5); }, null);
+
+                ReadString(14, "username", ref username, delegate { DisplayCurrentSettings(5); }, null);
+
+                ReadMaskedString(14, "password", ref password, delegate { DisplayCurrentSettings(5); }, null);
+
+                ReadString(14, "table name", ref tableName, delegate { DisplayCurrentSettings(5); }, null);
+
+                ReadString(14, "input file", ref inputFile, delegate { DisplayCurrentSettings(5); }, fileName =>
                 {
-                    Console.SetCursorPosition(0, 5);
-
-                    Console.WriteLine("\r\nCurrent Settings:                                                                              ");
-                    Console.Write(" Server:     "); Console.ForegroundColor = ConsoleColor.White; Console.Write(serverName + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Database:   "); Console.ForegroundColor = ConsoleColor.White; Console.Write(databaseName + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Username:   "); Console.ForegroundColor = ConsoleColor.White; Console.Write(username + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Password:   "); Console.ForegroundColor = ConsoleColor.White; Console.Write("***********\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Table:      "); Console.ForegroundColor = ConsoleColor.White; Console.Write(tableName + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Input File: "); Console.ForegroundColor = ConsoleColor.White; Console.Write(inputFile + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-
-
-                    Console.SetCursorPosition(0, 15);
-                    Console.WriteLine("                                                                                                   ");
-                    Console.SetCursorPosition(0, 14);
-                    Console.WriteLine("Enter server name [" + serverName + "]:                ");
-
-                    var val = Console.ReadLine();
-                    if (val != "") serverName = val;
-                } while (serverName == "");
-                do
-                {
-                    Console.SetCursorPosition(0, 5);
-
-                    Console.WriteLine("\r\nCurrent Settings:                                                                              ");
-                    Console.Write(" Server:     "); Console.ForegroundColor = ConsoleColor.White; Console.Write(serverName + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Database:   "); Console.ForegroundColor = ConsoleColor.White; Console.Write(databaseName + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Username:   "); Console.ForegroundColor = ConsoleColor.White; Console.Write(username + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Password:   "); Console.ForegroundColor = ConsoleColor.White; Console.Write("***********\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Table:      "); Console.ForegroundColor = ConsoleColor.White; Console.Write(tableName + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Input File: "); Console.ForegroundColor = ConsoleColor.White; Console.Write(inputFile + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Table:    "); Console.ForegroundColor = ConsoleColor.White; Console.Write(tableName + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-
-                    Console.SetCursorPosition(0, 15);
-                    Console.WriteLine("                                                                                                   ");
-                    Console.SetCursorPosition(0, 14);
-                    Console.WriteLine("Enter database name [" + databaseName + "]:              ");
-                    var val = Console.ReadLine();
-                    if (val != "") databaseName = val;
-                } while (databaseName == "");
-                do
-                {
-                    Console.SetCursorPosition(0, 5);
-
-                    Console.WriteLine("\r\nCurrent Settings:                                                                              ");
-                    Console.Write(" Server:     "); Console.ForegroundColor = ConsoleColor.White; Console.Write(serverName + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Database:   "); Console.ForegroundColor = ConsoleColor.White; Console.Write(databaseName + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Username:   "); Console.ForegroundColor = ConsoleColor.White; Console.Write(username + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Password:   "); Console.ForegroundColor = ConsoleColor.White; Console.Write("***********\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Table:      "); Console.ForegroundColor = ConsoleColor.White; Console.Write(tableName + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Input File: "); Console.ForegroundColor = ConsoleColor.White; Console.Write(inputFile + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-
-                    Console.SetCursorPosition(0, 15);
-                    Console.WriteLine("                                                                                                   ");
-                    Console.SetCursorPosition(0, 14);
-                    Console.WriteLine("Enter username [" + username + "]:                ");
-
-                    var val = Console.ReadLine();
-                    if (val != "") username = val;
-                } while (username == "");
-                do
-                {
-                    Console.SetCursorPosition(0, 5);
-
-                    Console.WriteLine("\r\nCurrent Settings:                                                                              ");
-                    Console.Write(" Server:     "); Console.ForegroundColor = ConsoleColor.White; Console.Write(serverName + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Database:   "); Console.ForegroundColor = ConsoleColor.White; Console.Write(databaseName + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Username:   "); Console.ForegroundColor = ConsoleColor.White; Console.Write(username + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Password:   "); Console.ForegroundColor = ConsoleColor.White; Console.Write("***********\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Table:      "); Console.ForegroundColor = ConsoleColor.White; Console.Write(tableName + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Input File: "); Console.ForegroundColor = ConsoleColor.White; Console.Write(inputFile + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-
-                    Console.SetCursorPosition(0, 15);
-                    Console.WriteLine("                                                                                                   ");
-                    Console.SetCursorPosition(0, 14);
-                    Console.WriteLine("Enter password [***********]:                 ");
-                    var val = Console.ReadLine();
-                    if (val != "") password = val;
-                } while (password == "");
-                do
-                {
-                    Console.SetCursorPosition(0, 5);
-
-                    Console.WriteLine("\r\nCurrent Settings:                                                                              ");
-                    Console.Write(" Server:     "); Console.ForegroundColor = ConsoleColor.White; Console.Write(serverName + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Database:   "); Console.ForegroundColor = ConsoleColor.White; Console.Write(databaseName + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Username:   "); Console.ForegroundColor = ConsoleColor.White; Console.Write(username + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Password:   "); Console.ForegroundColor = ConsoleColor.White; Console.Write("***********\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Table:      "); Console.ForegroundColor = ConsoleColor.White; Console.Write(tableName + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Input File: "); Console.ForegroundColor = ConsoleColor.White; Console.Write(inputFile + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-
-                    Console.SetCursorPosition(0, 15);
-                    Console.WriteLine("                                                                                                   ");
-                    Console.SetCursorPosition(0, 14);
-                    Console.WriteLine("Enter table name [" + tableName + "]:                ");
-
-                    var val = Console.ReadLine();
-                    if (val != "") tableName = val;
-                } while (tableName == "");
-                do
-                {
-                    Console.SetCursorPosition(0, 5);
-
-                    Console.WriteLine("\r\nCurrent Settings:                                                                              ");
-                    Console.Write(" Server:     "); Console.ForegroundColor = ConsoleColor.White; Console.Write(serverName + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Database:   "); Console.ForegroundColor = ConsoleColor.White; Console.Write(databaseName + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Username:   "); Console.ForegroundColor = ConsoleColor.White; Console.Write(username + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Password:   "); Console.ForegroundColor = ConsoleColor.White; Console.Write("***********\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Table:      "); Console.ForegroundColor = ConsoleColor.White; Console.Write(tableName + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" Input File: "); Console.ForegroundColor = ConsoleColor.White; Console.Write(inputFile + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-
-                    Console.SetCursorPosition(0, 15);
-                    Console.WriteLine("                                                                                                   ");
-                    Console.SetCursorPosition(0, 14);
-                    Console.WriteLine("Enter input file [" + inputFile + "]:                ");
-
-                    var val = Console.ReadLine();
-                    if (val != "") inputFile = val;
-
                     if (!System.IO.File.Exists(inputFile))
                     {
                         Console.ForegroundColor = ConsoleColor.Red;
                         Console.SetCursorPosition(0, 15);
                         Console.WriteLine(" ERROR: " + inputFile + " does not exist!");
                         Console.ForegroundColor = ConsoleColor.Gray;
-                        inputFile = "";
 
                         Console.ReadKey();
+                        return false;
                     }
+                    return true;
+                });
 
-                } while (inputFile == "");
+                DisplayCurrentSettings(5);
 
-                Console.SetCursorPosition(0, 5);
-                Console.WriteLine("\r\nCurrent Settings:                                                                                   ");
-                Console.Write(" Server:     "); Console.ForegroundColor = ConsoleColor.White; Console.Write(serverName + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                Console.Write(" Database:   "); Console.ForegroundColor = ConsoleColor.White; Console.Write(databaseName + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                Console.Write(" Username:   "); Console.ForegroundColor = ConsoleColor.White; Console.Write(username + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                Console.Write(" Password:   "); Console.ForegroundColor = ConsoleColor.White; Console.Write("***********\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                Console.Write(" Table:      "); Console.ForegroundColor = ConsoleColor.White; Console.Write(tableName + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-                Console.Write(" Input File: "); Console.ForegroundColor = ConsoleColor.White; Console.Write(inputFile + "\r\n"); Console.ForegroundColor = ConsoleColor.Gray;
-
-                Console.SetCursorPosition(0, 14);
-                Console.WriteLine("                                                                                                   ");
-                Console.SetCursorPosition(0, 15);
-                Console.WriteLine("                                                                                                   ");
+                ClearPosition(14);
+                ClearPosition(15);
                 Console.SetCursorPosition(0, 15);
                 Console.Write("Are these values correct [Y]/n: ");
 
@@ -348,16 +316,19 @@ namespace DNQ.RandomSuffler
             } while (true);
         }
 
+        /// <summary>
+        /// Convenience Method.
+        /// Creates a table with correct schema in the configured database, on the configured server, that 
+        /// can hold a shuffled list.
+        /// </summary>
         static void CreateTable()
         {
-            Console.Clear();
+            DisplayHeader();
 
-            Console.WriteLine("Random List Generator\r\n==============================================================================");
-            Console.WriteLine("    M. Dinescu <mdinescu@donaq.com>");
-            Console.WriteLine();
             Console.WriteLine("[Upload to Server]");
             Console.WriteLine("   - Create Table -");
 
+            // if configuraton is not available - or incorrect, display error message and go back..
             if (databaseName == "" || password == "" || tableName == "")
             {
                 Console.ForegroundColor = ConsoleColor.Red;
@@ -423,13 +394,14 @@ namespace DNQ.RandomSuffler
             }
         }
 
+        /// <summary>
+        /// Convenience method.
+        /// Drops a table from the configured database (and server). The table name can also be configured.
+        /// </summary>
         static void DropTable()
         {
-            Console.Clear();
+            DisplayHeader();
 
-            Console.WriteLine("Random List Generator\r\n==============================================================================");
-            Console.WriteLine("    M. Dinescu <mdinescu@donaq.com>");
-            Console.WriteLine();
             Console.WriteLine("[Upload to Server]");
             Console.WriteLine("   - Drop Table -");
 
@@ -507,11 +479,8 @@ namespace DNQ.RandomSuffler
         /// </summary>
         static void UploadNumbers()
         {
-            Console.Clear();
+            DisplayHeader();
 
-            Console.WriteLine("Random List Generator\r\n==============================================================================");
-            Console.WriteLine("    M. Dinescu <mdinescu@donaq.com>");
-            Console.WriteLine();
             Console.WriteLine("[Upload to Server]");
             Console.WriteLine("   - Upload Numbers (" + maxNum + ")-");
 
